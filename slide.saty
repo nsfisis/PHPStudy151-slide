@@ -1,0 +1,305 @@
+@require: class-slydifi/theme/akasaka
+@require: code-printer/code-design
+@require: code-printer/code-printer
+@require: code-printer/code-syntax
+@require: code-printer/code-theme
+@require: figbox/figbox
+
+let-block +code-block-php source =
+  '<
+    +code-printer?:(
+      CodePrinter.make-config CodeSyntax.php CodeTheme.iceberg-light
+      |> CodePrinter.set-number-fun CodeDesign.number-fun-null
+    )(source);
+  >
+
+let-block +code-block-c source =
+  '<
+    +code-printer?:(
+      CodePrinter.make-config CodeSyntax.c CodeTheme.iceberg-light
+      |> CodePrinter.set-number-fun CodeDesign.number-fun-null
+    )(source);
+  >
+
+open FigBox
+in
+
+document '<
+  +set-config(|
+    SlydifiThemeAkasaka.default-config with
+    color-emph = Color.black;
+  |);
+
+  +make-title(|
+    title = {
+      |list でない array の末尾を探す
+      |};
+    author = {|nsfisis (いまむら)|};
+    date = {|第151回PHP勉強会＠東京|};
+  |);
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  +frame{自己紹介}<
+    +fig-center(vconcat [
+      gap 75pt;
+      hconcat [
+        textbox{nsfisis (いまむら)};
+        gap 20pt;
+        include-image 50pt `assets/me.jpeg`;
+      ];
+      gap 20pt;
+      textbox{\@ デジタルサーカス株式会社};
+    ]);
+  >
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  +frame{配列の末尾挿入}<
+    +code-block-php(`<?php
+
+$xs = [1, 2, 3];
+$xs[] = 42;
+assert($xs[3] === 42);
+`#);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  "a" => 1,
+  "b" => 2,
+  "c" => 3,
+];
+$xs[] = 42;
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  "a" => 1,
+  "b" => 2,
+  "c" => 3,
+];
+$xs[] = 42;
+assert($xs[0] === 42);
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  0 => 1,
+  1 => 2,
+  3 => 4,
+];
+$xs[] = 42;
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  0 => 1,
+  1 => 2,
+  3 => 4,
+];
+$xs[] = 42;
+assert($xs[4] === 42);
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  -10 => 1,
+  -7 => 2,
+  -5 => 4,
+];
+$xs[] = 42;
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  -10 => 1,
+  -7 => 2,
+  -5 => 4,
+];
+$xs[] = 42;
+assert($xs[-4] === 42);
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [];
+$xs[10] = 1;
+$xs[] = 42;
+$xs[5] = 2;
+$xs[] = 57;
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [];
+$xs[10] = 1;
+$xs[] = 42;
+$xs[5] = 2;
+$xs[] = 57;
+assert($xs[11] === 42);
+assert($xs[12] === 57);
+`);
+  >
+
+  +section{|php-srcを読む|}<
+    +frame{ZEND_ASSIGN_DIM}<
+      +listing{
+        * \inline-code(`Zend/zend_vm_opcodes.h`);
+          ** PHP の VM (virtual machine) の opcode (operation code) 一覧
+      }
+    >
+
+    +frame{ZEND_ASSIGN_DIM}<
+      +listing{
+        * \inline-code(`Zend/zend_vm_opcodes.h`);
+          ** PHP の VM (virtual machine) の opcode (operation code) 一覧
+        * \inline-code(`ZEND_ASSIGN_DIM`);
+          ** 配列への代入 (assign dimensional)
+      }
+    >
+
+    +frame{ZEND_ASSIGN_DIM}<
+      +listing{
+        * \inline-code(`Zend/zend_vm_opcodes.h`);
+          ** PHP の VM (virtual machine) の opcode (operation code) 一覧
+        * \inline-code(`ZEND_ASSIGN_DIM`);
+          ** 配列への代入 (assign dimensional)
+        * \inline-code(`Zend/zend_vm_def.h`);
+          ** 各 opcode のハンドラが定義されている
+      }
+    >
+
+    +frame{php-srcを読むヒント}<
+      +listing{
+        * \inline-code(`EXPECTED`);
+          ** よく通るパス。最も一般的なケース
+        * \inline-code(`UNEXPECTED`);
+          ** ほとんど通らないパス。エラー処理など
+      }
+    >
+
+    +frame{zend_hash_next_index_insert}<
+      +code-block-c(`value = zend_hash_next_index_insert(
+  Z_ARRVAL_P(object_ptr),
+  value
+);`);
+      +p{※説明のためやや改変}
+    >
+
+    +frame{zend_hash_next_index_insert}<
+      +code-block-c(`zval* zend_hash_next_index_insert(
+  HashTable *ht,
+  zval *pData
+) {
+  return _zend_hash_index_add_or_update_i(
+    ht,
+    ht->nNextFreeElement, /* 挿入先のインデックス */
+    pData,
+    HASH_ADD | HASH_ADD_NEXT
+  );
+}
+`);
+      +p{※説明のためやや改変}
+    >
+
+    +frame{nNextFreeElement}<
+      +listing{
+        * \inline-code(`Zend/zend_hash.c`);
+        * \inline-code(`_zend_hash_index_add_or_update_i()`);
+      }
+    >
+
+    +frame{nNextFreeElement}<
+      +listing{
+        * \inline-code(`Zend/zend_hash.c`);
+        * \inline-code(`_zend_hash_index_add_or_update_i()`);
+      }
+      +p{
+        \inline-code(`array`);に数値のキーで代入したとき、そのキーが\inline-code(`nNextFreeElement`);以上なら、その値+1になる
+      }
+    >
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  "a" => 1,
+  "b" => 2,
+  "c" => 3,
+];
+$xs[] = 42;
+assert($xs[0] === 42);
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  0 => 1,
+  1 => 2,
+  3 => 4,
+];
+$xs[] = 42;
+assert($xs[4] === 42);
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [
+  -10 => 1,
+  -7 => 2,
+  -5 => 4,
+];
+$xs[] = 42;
+assert($xs[-4] === 42);
+`);
+  >
+
+  +frame{PHP クイズ}<
+    +code-block-php(`<?php
+
+$xs = [];
+$xs[10] = 1;
+$xs[] = 42;
+$xs[5] = 2;
+$xs[] = 57;
+assert($xs[11] === 42);
+assert($xs[12] === 57);
+`);
+  >
+
+  +frame{おまけ}<
+    +code-block-php(`<?php
+$xs = [1, 2, 3];
+$xs[] += 10;
+`);
+    +p{末尾代入と複合代入演算子は同時に使える}
+  >
+
+>
