@@ -64,7 +64,7 @@ assert($xs[3] === 42);
 `#);
   >
 
-  +frame{PHP クイズ}<
+  +frame{末尾はどこ？}<
     +code-block-php(`<?php
 
 $xs = [
@@ -76,20 +76,7 @@ $xs[] = 42;
 `);
   >
 
-  +frame{PHP クイズ}<
-    +code-block-php(`<?php
-
-$xs = [
-  "a" => 1,
-  "b" => 2,
-  "c" => 3,
-];
-$xs[] = 42;
-assert($xs[0] === 42);
-`);
-  >
-
-  +frame{PHP クイズ}<
+  +frame{末尾はどこ？}<
     +code-block-php(`<?php
 
 $xs = [
@@ -101,20 +88,7 @@ $xs[] = 42;
 `);
   >
 
-  +frame{PHP クイズ}<
-    +code-block-php(`<?php
-
-$xs = [
-  0 => 1,
-  1 => 2,
-  3 => 4,
-];
-$xs[] = 42;
-assert($xs[4] === 42);
-`);
-  >
-
-  +frame{PHP クイズ}<
+  +frame{末尾はどこ？}<
     +code-block-php(`<?php
 
 $xs = [
@@ -126,20 +100,7 @@ $xs[] = 42;
 `);
   >
 
-  +frame{PHP クイズ}<
-    +code-block-php(`<?php
-
-$xs = [
-  -10 => 1,
-  -7 => 2,
-  -5 => 4,
-];
-$xs[] = 42;
-assert($xs[-4] === 42);
-`);
-  >
-
-  +frame{PHP クイズ}<
+  +frame{末尾はどこ？}<
     +code-block-php(`<?php
 
 $xs = [];
@@ -147,19 +108,6 @@ $xs[10] = 1;
 $xs[] = 42;
 $xs[5] = 2;
 $xs[] = 57;
-`);
-  >
-
-  +frame{PHP クイズ}<
-    +code-block-php(`<?php
-
-$xs = [];
-$xs[10] = 1;
-$xs[] = 42;
-$xs[5] = 2;
-$xs[] = 57;
-assert($xs[11] === 42);
-assert($xs[12] === 57);
 `);
   >
 
